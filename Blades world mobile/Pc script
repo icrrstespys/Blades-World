@@ -1,0 +1,376 @@
+-- SERVICES
+local Players = game:GetService("Players")
+local LP = Players.LocalPlayer
+local WS = game:GetService("Workspace")
+local RunService = game:GetService("RunService")
+local UIS = game:GetService("UserInputService")
+local StarterGui = game:GetService("StarterGui")
+local Lighting = game:GetService("Lighting")
+local VirtualUser = game:GetService("VirtualUser")
+
+-- ================= UTILS =================
+local function notify(text)
+    pcall(function()
+        StarterGui:SetCore("SendNotification",{
+            Title="Kobe W",
+            Text=text,
+            Duration=3
+        })
+    end)
+end
+
+local function makeDraggable(frame)
+    local dragging, dragStart, startPos
+    frame.InputBegan:Connect(function(i)
+        if i.UserInputType == Enum.UserInputType.MouseButton1 or i.UserInputType == Enum.UserInputType.Touch then
+            dragging = true
+            dragStart = i.Position
+            startPos = frame.Position
+            i.Changed:Connect(function()
+                if i.UserInputState == Enum.UserInputState.End then dragging = false end
+            end)
+        end
+    end)
+    UIS.InputChanged:Connect(function(i)
+        if dragging and (i.UserInputType == Enum.UserInputType.MouseMovement or i.UserInputType == Enum.UserInputType.Touch) then
+            local delta = i.Position - dragStart
+            frame.Position = UDim2.new(
+                startPos.X.Scale,
+                startPos.X.Offset + delta.X,
+                startPos.Y.Scale,
+                startPos.Y.Offset + delta.Y
+            )
+        end
+    end)
+end
+
+-- ================= GUI ROOT =================
+local gui = Instance.new("ScreenGui", LP.PlayerGui)
+gui.ResetOnSpawn = false
+
+-- ================= KEY SYSTEM =================
+local CURRENT_KEY = ""
+local KEY_GENERATED = false
+
+local keyFrame = Instance.new("Frame", gui)
+keyFrame.Size = UDim2.new(1,0,1,0)
+keyFrame.Position = UDim2.new(0,0,0,0)
+keyFrame.BackgroundColor3 = Color3.fromRGB(0,0,0)
+
+-- Input Key Box (above buttons)
+local keyInput = Instance.new("TextBox", keyFrame)
+keyInput.Size = UDim2.new(0.5,0,0,50)
+keyInput.Position = UDim2.new(0.25,0,0.35,0)
+keyInput.PlaceholderText = "Paste your key here"
+keyInput.TextScaled = true
+keyInput.Font = Enum.Font.SourceSansBold
+keyInput.TextColor3 = Color3.new(1,1,1)
+keyInput.ClearTextOnFocus = false
+
+-- Get Key Button
+local getBtn = Instance.new("TextButton", keyFrame)
+getBtn.Size = UDim2.new(0.3,0,0,60)
+getBtn.Position = UDim2.new(0.15,0,0.55,0)
+getBtn.Text = "GET KEY (10s)"
+getBtn.Font = Enum.Font.SourceSansBold
+getBtn.TextColor3 = Color3.new(1,1,1)
+getBtn.BackgroundColor3 = Color3.fromRGB(100,100,255)
+
+-- Check Key Button
+local checkBtn = Instance.new("TextButton", keyFrame)
+checkBtn.Size = UDim2.new(0.3,0,0,60)
+checkBtn.Position = UDim2.new(0.55,0,0.55,0)
+checkBtn.Text = "CHECK KEY"
+checkBtn.Font = Enum.Font.SourceSansBold
+checkBtn.TextColor3 = Color3.new(1,1,1)
+checkBtn.BackgroundColor3 = Color3.fromRGB(255,100,100)
+
+-- Loading GUI
+local loadingFrame = Instance.new("Frame", gui)
+loadingFrame.Size = UDim2.new(0.6,0,0.1,0)
+loadingFrame.Position = UDim2.new(0.2,0,0.8,0)
+loadingFrame.BackgroundColor3 = Color3.fromRGB(20,20,20)
+loadingFrame.Visible = false
+
+local loadingBar = Instance.new("Frame", loadingFrame)
+loadingBar.Size = UDim2.new(0,0,1,0)
+loadingBar.BackgroundColor3 = Color3.fromRGB(50,200,50)
+
+local loadingPercent = Instance.new("TextLabel", loadingFrame)
+loadingPercent.Size = UDim2.new(1,0,1,0)
+loadingPercent.BackgroundTransparency = 1
+loadingPercent.TextColor3 = Color3.new(1,1,1)
+loadingPercent.TextScaled = true
+loadingPercent.Text = "0%"
+
+-- ================= KEY FUNCTIONS =================
+local function generateKey()
+    return "EzForYou-"..math.random(100000000,999999999).."#$"..math.random(100000000,999999999)
+end
+
+getBtn.MouseButton1Click:Connect(function()
+    notify("Wait 10 seconds to get the key...")
+    getBtn.Text = "WAIT..."
+    getBtn.Active = false
+    task.delay(10,function()
+        CURRENT_KEY = generateKey()
+        setclipboard(CURRENT_KEY)
+        KEY_GENERATED = true
+        getBtn.Text = "Click Check Key"
+        getBtn.Active = true
+        notify("Key has been generated! Paste it in the box and click CHECK KEY")
+    end)
+end)
+
+-- ================= MAIN GUI =================
+local main = Instance.new("Frame", gui)
+main.Size = UDim2.new(0.7,0,0.7,0)
+main.Position = UDim2.new(0.15,0,0.15,0)
+main.BackgroundColor3 = Color3.fromRGB(20,20,20)
+main.Visible = false
+makeDraggable(main)
+
+local title = Instance.new("TextLabel", main)
+title.Size = UDim2.new(1,0,0,60)
+title.Position = UDim2.new(0,0,0,0)
+title.Text = "BladesWorldOp"
+title.TextScaled = true
+title.Font = Enum.Font.SourceSansBold
+title.TextColor3 = Color3.new(1,1,1)
+title.BackgroundTransparency = 1
+
+local grid = Instance.new("UIGridLayout", main)
+grid.CellSize = UDim2.new(0.45,0,0,50)
+grid.CellPadding = UDim2.new(0,10,0,10)
+grid.HorizontalAlignment = Enum.HorizontalAlignment.Center
+grid.VerticalAlignment = Enum.VerticalAlignment.Top
+
+-- ================= MAIN GUI BUTTONS =================
+local function createButton(parent,text,color)
+    local btn = Instance.new("TextButton", parent)
+    btn.Size = UDim2.new(1,0,1,0)
+    btn.Text = text
+    btn.Font = Enum.Font.SourceSansBold
+    btn.TextColor3 = Color3.new(1,1,1)
+    btn.BackgroundColor3 = color
+    return btn
+end
+
+local autoBtn = createButton(main,"Auto Power: OFF",Color3.fromRGB(200,60,60))
+local spyBtn = createButton(main,"Spy Player Power",Color3.fromRGB(80,80,80))
+local fpsBtn = createButton(main,"FPS + Ping",Color3.fromRGB(80,80,80))
+local ppsBtn = createButton(main,"PPS Tracker",Color3.fromRGB(80,80,80))
+local antiLagBtn = createButton(main,"Anti Lag",Color3.fromRGB(80,80,80))
+local antiAfkBtn = createButton(main,"Anti AFK",Color3.fromRGB(80,80,80))
+local teleportBtn = createButton(main,"Teleport Safe Place",Color3.fromRGB(60,200,200))
+
+-- ================= CHECK KEY =================
+checkBtn.MouseButton1Click:Connect(function()
+    if KEY_GENERATED and keyInput.Text == CURRENT_KEY then
+        loadingFrame.Visible = true
+        loadingBar.Size = UDim2.new(0,0,1,0)
+        loadingPercent.Text = "0%"
+        notify("Correct Key! Loading GUI...")
+        local duration = 3
+        local steps = 100
+        for i = 1, steps do
+            task.wait(duration/steps)
+            local percent = i/steps
+            loadingBar.Size = UDim2.new(percent,0,1,0)
+            loadingPercent.Text = math.floor(percent*100).."%"
+        end
+        loadingFrame.Visible = false
+        keyFrame.Visible = false
+        main.Visible = true
+        notify("GUI Loaded!")
+    else
+        notify("Incorrect key or key not ready yet")
+    end
+end)
+
+-- ================= BUTTON FUNCTIONS =================
+local autoPower = false
+autoBtn.MouseButton1Click:Connect(function()
+    autoPower = not autoPower
+    autoBtn.Text = autoPower and "Auto Power: ON" or "Auto Power: OFF"
+end)
+task.spawn(function()
+    while true do
+        task.wait()
+        if autoPower and WS:FindFirstChild("BladePowerGiver") then
+            WS.BladePowerGiver.RemoteEvent:FireServer()
+        end
+    end
+end)
+
+-- ================= SPY PLAYER POWER =================
+local Players = game:GetService("Players")
+local StarterGui = game:GetService("StarterGui")
+local LP = Players.LocalPlayer
+
+-- Input Box for player username
+local spyInput = Instance.new("TextBox")
+spyInput.Size = UDim2.new(0.9,0,0,40)
+spyInput.Position = UDim2.new(0.05,0,0.05,0) -- Adjust according to your GUI
+spyInput.PlaceholderText = "Type player username to spy on real power"
+spyInput.Text = "" -- starts empty
+spyInput.ClearTextOnFocus = false
+spyInput.Font = Enum.Font.SourceSansBold
+spyInput.TextScaled = true
+spyInput.TextColor3 = Color3.fromRGB(255,255,255)
+spyInput.BackgroundColor3 = Color3.fromRGB(50,50,50)
+spyInput.Parent = main -- attach to your main GUI frame
+
+-- Spy Button
+local spyBtn = Instance.new("TextButton")
+spyBtn.Size = UDim2.new(0.45,0,0,50)
+spyBtn.Position = UDim2.new(0.05,0,0.12,0) -- below input box
+spyBtn.Text = "Spy Power"
+spyBtn.Font = Enum.Font.SourceSansBold
+spyBtn.TextScaled = true
+spyBtn.TextColor3 = Color3.fromRGB(255,255,255)
+spyBtn.BackgroundColor3 = Color3.fromRGB(80,80,80)
+spyBtn.Parent = main
+
+-- Function to check player's real power
+spyBtn.MouseButton1Click:Connect(function()
+    local targetName = spyInput.Text
+    local plr = Players:FindFirstChild(targetName)
+    if plr and plr:FindFirstChild("leaderstats") and plr.leaderstats:FindFirstChild("Power") then
+        local power = plr.leaderstats.Power.Value
+        StarterGui:SetCore("SendNotification", {
+            Title = "Kobe W",
+            Text = targetName.." Power: "..power,
+            Duration = 5
+        })
+    else
+        StarterGui:SetCore("SendNotification", {
+            Title = "Kobe W",
+            Text = "Player or Power not found!",
+            Duration = 5
+        })
+    end
+end)
+    
+-- FPS + Ping Tracker
+local fpsGui = Instance.new("Frame", gui)
+fpsGui.Size = UDim2.new(0,200,0,70)
+fpsGui.Position = UDim2.new(0.02,0,0.02,0)
+fpsGui.BackgroundColor3 = Color3.fromRGB(25,25,25)
+fpsGui.Visible = false
+makeDraggable(fpsGui)
+local fpsLabel = Instance.new("TextLabel", fpsGui)
+fpsLabel.Size = UDim2.new(1,0,0.5,0)
+fpsLabel.BackgroundTransparency = 1
+fpsLabel.Font = Enum.Font.SourceSansBold
+fpsLabel.TextColor3 = Color3.new(1,1,1)
+fpsLabel.TextScaled = true
+local pingLabel = Instance.new("TextLabel", fpsGui)
+pingLabel.Size = UDim2.new(1,0,0.5,0)
+pingLabel.Position = UDim2.new(0,0,0.5,0)
+pingLabel.BackgroundTransparency = 1
+pingLabel.Font = Enum.Font.SourceSansBold
+pingLabel.TextColor3 = Color3.new(1,1,1)
+pingLabel.TextScaled = true
+
+fpsBtn.MouseButton1Click:Connect(function()
+    fpsGui.Visible = not fpsGui.Visible
+end)
+
+task.spawn(function()
+    local last = tick()
+    while true do
+        RunService.RenderStepped:Wait()
+        local now = tick()
+        fpsLabel.Text = "FPS: "..math.floor(1/(now-last))
+        pingLabel.Text = "Ping: "..math.floor(LP:GetNetworkPing()*1000).." ms"
+        last = now
+    end
+end)
+
+-- PPS Tracker
+local ppsGui = Instance.new("Frame", gui)
+ppsGui.Size = UDim2.new(0,160,0,50)
+ppsGui.Position = UDim2.new(0.8,0,0.2,0)
+ppsGui.BackgroundColor3 = Color3.fromRGB(25,25,25)
+ppsGui.Visible = false
+makeDraggable(ppsGui)
+local ppsLabel = Instance.new("TextLabel", ppsGui)
+ppsLabel.Size = UDim2.new(1,0,1,0)
+ppsLabel.TextScaled = true
+ppsLabel.Font = Enum.Font.SourceSansBold
+ppsLabel.TextColor3 = Color3.new(1,1,1)
+ppsLabel.BackgroundTransparency = 1
+
+ppsBtn.MouseButton1Click:Connect(function()
+    ppsGui.Visible = not ppsGui.Visible
+end)
+
+task.spawn(function()
+    local lastPower = 0
+    while true do
+        task.wait(1)
+        if ppsGui.Visible and LP:FindFirstChild("leaderstats") then
+            local p = LP.leaderstats.Power.Value
+            ppsLabel.Text = "PPS: "..math.floor(p - lastPower)
+            lastPower = p
+        end
+    end
+end)
+
+-- Anti Lag
+antiLagBtn.MouseButton1Click:Connect(function()
+    for _,v in pairs(WS:GetDescendants()) do
+        if v:IsA("ParticleEmitter") or v:IsA("Trail") or v:IsA("Smoke") then
+            v.Enabled = false
+        elseif v:IsA("BasePart") then
+            v.Material = Enum.Material.SmoothPlastic
+            v.Reflectance = 0
+        end
+    end
+    Lighting.GlobalShadows = false
+    notify("Anti Lag Enabled")
+end)
+
+-- Anti AFK
+local afkOn = false
+antiAfkBtn.MouseButton1Click:Connect(function()
+    afkOn = not afkOn
+    notify(afkOn and "Anti AFK Enabled" or "Anti AFK Disabled")
+end)
+LP.Idled:Connect(function()
+    if afkOn then
+        VirtualUser:CaptureController()
+        VirtualUser:ClickButton2(Vector2.new())
+    end
+end)
+
+-- Teleport Safe Place
+local safePos = Vector3.new(486,27,-466)
+teleportBtn.MouseButton1Click:Connect(function()
+    if LP.Character and LP.Character:FindFirstChild("HumanoidRootPart") then
+        LP.Character.HumanoidRootPart.CFrame = CFrame.new(safePos)
+    end
+end)
+
+-- Auto Back Away
+local BACK_AWAY_DISTANCE = 2
+task.spawn(function()
+    while true do
+        task.wait(0.1)
+        if LP.Character and LP.Character:FindFirstChild("HumanoidRootPart") then
+            for _,plr in pairs(Players:GetPlayers()) do
+                if plr ~= LP and plr.Character and plr.Character:FindFirstChild("HumanoidRootPart") then
+                    local dist = (LP.Character.HumanoidRootPart.Position - plr.Character.HumanoidRootPart.Position).Magnitude
+                    if dist <= BACK_AWAY_DISTANCE then
+                        local hrp = LP.Character.HumanoidRootPart
+                        for i=1,5 do
+                            hrp.CFrame = CFrame.new(hrp.Position:Lerp(safePos,0.2))
+                            task.wait(0.05)
+                        end
+                    end
+                end
+            end
+        end
+    end
+end)
